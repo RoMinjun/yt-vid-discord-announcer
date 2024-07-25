@@ -1,6 +1,10 @@
 # yt-vid-discord-announcer
 A go project created to let Kirei's community know about a new youtube video
 
+> [!WARNING] 
+> Currently only works on localhost
+
+
 ## .env file
 Make sure you populate the .env file with the following:
 ```ini
@@ -13,3 +17,4 @@ DISCORD_WEBHOOK_URL=<discord-webhook>
 
 ## TODO:
 - Add support for docker hosting
+  - change callback URL to dynamic url 
