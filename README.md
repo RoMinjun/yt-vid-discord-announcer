@@ -2,7 +2,7 @@
 A go project created to let Kirei's community know about a new youtube video
 
 > [!WARNING] 
-> Currently only works on localhost
+> Only works with docker, if you want it to work without docker add an absolute path to the .env
 
 
 ## .env file
