@@ -2,10 +2,13 @@ package auth
 
 import (
 	"context"
-	"fmt"
+	"log"
 	"os"
+	"strings"
 	"sync"
 
+	"github.com/rominjun/yt-vid-discord-announcer/internal/service"
+	"github.com/rominjun/yt-vid-discord-announcer/internal/tokenstore"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 )
@@ -29,23 +32,16 @@ func SetupOAuthConfig() {
 		Endpoint:     google.Endpoint,
 		RedirectURL:  os.Getenv("REDIRECT_URL"),
 	}
-}
 
-func ForceRefreshToken() (*oauth2.Token, error) {
-	tokenMu.Lock()
-	defer tokenMu.Unlock()
-
-	token, err := tokenSource.Token()
-	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve token: %v", err)
+	token, err := tokenstore.LoadToken()
+	if err == nil {
+		log.Printf("Loaded token: Access Token: %s, Refresh Token: %s", token.AccessToken, token.RefreshToken)
+		tokenSource = oauthConfig.TokenSource(ctx, token)
+		err = service.InitializeYouTubeService(ctx, oauthConfig, tokenSource)
+		if err != nil {
+			log.Fatalf("Error creating YouTube service: %v", err)
+		}
+	} else {
+		log.Printf("No existing token found, user needs to authenticate %s", strings.TrimSuffix(os.Getenv("REDIRECT_URL"), "/callback"))
 	}
-
-	newToken, err := oauthConfig.TokenSource(ctx, token).Token()
-	if err != nil {
-		return nil, fmt.Errorf("failed to refresh token: %v", err)
-	}
-
-	tokenSource = oauthConfig.TokenSource(ctx, newToken)
-
-	return newToken, nil
 }

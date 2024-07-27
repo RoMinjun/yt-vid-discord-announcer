@@ -36,7 +36,7 @@ func StartCheckingYouTube() {
 		if newVideoId != "" && newVideoId != lastNotifiedId {
 			lastNotifiedId = newVideoId
 			videoLink := "https://www.youtube.com/watch?v=" + newVideoId
-			message := "Hey @everyone, youtuber just uploaded [" + videoTitle + "](" + videoLink + ")"
+			message := "Hey @everyone, Coach Kirei just uploaded [" + videoTitle + "](" + videoLink + ")"
 			discord.SendDiscordWebhook(message)
 			fmt.Printf("New video found! URL: %s\n", videoLink)
 		}

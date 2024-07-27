@@ -4,25 +4,13 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"path/filepath"
 
 	"github.com/joho/godotenv"
 	"github.com/rominjun/yt-vid-discord-announcer/internal/auth"
 )
 
 func main() {
-	// Get the absolute path to the .env file
-	// Adjust the path as necessary based on your directory structure
-	envPath, err := filepath.Abs("../../.env")
-	if err != nil {
-		log.Fatalf("Error getting absolute path to .env file: %v", err)
-	}
-
-	// Log the absolute path to ensure it is correct
-	log.Printf("Loading .env file from: %s", envPath)
-
-	// Load the .env file
-	err = godotenv.Load(envPath)
+	err := godotenv.Load()
 	if err != nil {
 		log.Fatalf("Error loading .env file: %v", err)
 	}
