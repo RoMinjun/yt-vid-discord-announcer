@@ -14,7 +14,3 @@ CHANNEL_ID=<channel_id>
 REDIRECT_URL=http://localhost:8080/callback
 DISCORD_WEBHOOK_URL=<discord-webhook>
 ```
-
-## TODO:
-- Add support for docker hosting
-  - change callback URL to dynamic url 
