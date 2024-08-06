@@ -1,6 +1,7 @@
 package youtube
 
 import (
+	"html"
 	"log"
 	"os"
 	"sync"
@@ -18,6 +19,7 @@ var (
 
 const lastNotifiedFilePath = "last_notified_id.txt"
 
+// Save the last notified video ID to a file
 func saveLastNotifiedId() {
 	err := os.WriteFile(lastNotifiedFilePath, []byte(lastNotifiedId), 0644)
 	if err != nil {
@@ -25,6 +27,7 @@ func saveLastNotifiedId() {
 	}
 }
 
+// Load the last notified video ID from a file
 func loadLastNotifiedId() {
 	data, err := os.ReadFile(lastNotifiedFilePath)
 	if err != nil {
@@ -34,6 +37,7 @@ func loadLastNotifiedId() {
 	lastNotifiedId = string(data)
 }
 
+// StartCheckingYouTube initiates the process of checking YouTube for new videos
 func StartCheckingYouTube() {
 	loadLastNotifiedId()
 
@@ -45,26 +49,34 @@ func StartCheckingYouTube() {
 				log.Printf("Error refreshing token: %v", err)
 			} else {
 				log.Println("Token refreshed successfully")
+				// Immediately check for new videos after refreshing the token
+				checkForNewVideos()
 			}
 		}
 	}()
 
 	for {
-		checkMu.Lock()
-		newVideoId, videoTitle, channelTitle := checkForNewVideo()
-		if newVideoId != "" && newVideoId != lastNotifiedId {
-			lastNotifiedId = newVideoId
-			saveLastNotifiedId()
-			videoLink := "https://www.youtube.com/watch?v=" + newVideoId
-			message := "Hey @everyone," + channelTitle + " just uploaded [" + videoTitle + "](" + videoLink + ")! Go check it out!"
-			discord.SendDiscordWebhook(message)
-			log.Printf("New video found! URL: %s\n", videoLink)
-		}
-		checkMu.Unlock()
+		checkForNewVideos()
 		time.Sleep(15 * time.Minute) // Check every 15 minutes
 	}
 }
 
+// checkForNewVideos checks YouTube for new videos and sends notifications
+func checkForNewVideos() {
+	checkMu.Lock()
+	defer checkMu.Unlock()
+	newVideoId, videoTitle, channelTitle := checkForNewVideo()
+	if newVideoId != "" && newVideoId != lastNotifiedId {
+		lastNotifiedId = newVideoId
+		saveLastNotifiedId()
+		videoLink := "https://www.youtube.com/watch?v=" + newVideoId
+		message := "Hey @everyone," + channelTitle + " just uploaded [" + videoTitle + "](" + videoLink + ")! Go check it out!"
+		discord.SendDiscordWebhook(message)
+		log.Printf("New video found! URL: %s\n", videoLink)
+	}
+}
+
+// checkForNewVideo fetches the most recent video from the YouTube channel
 func checkForNewVideo() (string, string, string) {
 	service.YouTubeMu.Lock()
 	defer service.YouTubeMu.Unlock()
@@ -75,29 +87,22 @@ func checkForNewVideo() (string, string, string) {
 		return "", "", ""
 	}
 
-	call := service.YouTubeService.Search.List([]string{"snippet"}).ChannelId(channelId).Order("date").MaxResults(1)
+	call := service.YouTubeService.Search.List([]string{"snippet"}).ChannelId(channelId).Order("date").PublishedAfter(time.Now().Add(-24 * time.Hour).Format(time.RFC3339)).MaxResults(1)
 	response, err := call.Do()
 	if err != nil {
 		if gErr, ok := err.(*googleapi.Error); ok {
-			if gErr.Code == 403 {
-				// Quota exceeded, backoff
-				log.Println("Quota exceeded, backing off for 30 mins")
-				time.Sleep(30 * time.Minute)
-				return "", "", ""
-			}
+			log.Printf("Google API error: %v", gErr)
+		} else {
+			log.Printf("Error checking for new video: %v", err)
 		}
-		log.Printf("Error making API call: %v", err)
 		return "", "", ""
 	}
 
 	if len(response.Items) == 0 {
-		log.Println("No videos found")
 		return "", "", ""
 	}
 
 	video := response.Items[0]
-	videoId := video.Id.VideoId
-	videoTitle := video.Snippet.Title
-	channelTitle := video.Snippet.ChannelTitle
-	return videoId, videoTitle, channelTitle
+	videoTitle := html.UnescapeString(video.Snippet.Title) // Unescape HTML characters in the title
+	return video.Id.VideoId, videoTitle, video.Snippet.ChannelTitle
 }
