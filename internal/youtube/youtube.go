@@ -70,9 +70,10 @@ func checkForNewVideos() {
 		lastNotifiedId = newVideoId
 		saveLastNotifiedId()
 		videoLink := "https://www.youtube.com/watch?v=" + newVideoId
-		message := "Hey @everyone, " + channelTitle + " just uploaded [" + videoTitle + "](" + videoLink + ")! Go check it out!"
-		discord.SendDiscordWebhook(message)
-		discord.SendFooterEmbed()
+
+		// Use the updated SendDiscordWebhook function to send the video details
+		discord.SendDiscordWebhook(channelTitle, videoTitle, videoLink)
+
 		log.Printf("New video found! URL: %s\n", videoLink)
 	}
 }
