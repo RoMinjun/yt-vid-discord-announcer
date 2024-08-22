@@ -1,5 +1,5 @@
 # yt-vid-discord-announcer
-A go project created to let Kirei's community know about a new youtube video. I've done this project as hobby so I'd get to know golang a little bit more with the goal to use it in my profession.
+A go project created to let Kirei's community know about a new youtube video (and shorts). I've done this project as hobby so I'd get to know golang a little bit more with the goal to use it in my profession.
 Go checkout [Kirei's youtube channel](https://www.youtube.com/@KireiLoL)
 
 ![](https://i.imgur.com/JDixW90.png)
